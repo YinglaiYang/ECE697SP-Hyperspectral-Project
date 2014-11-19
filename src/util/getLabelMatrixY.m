@@ -6,10 +6,10 @@ c = unique(mapTraining);
 [a, b] = size(mapTraining);
 %build Y matrix with the coressponding size
 Y = zeros(a*b,c(length(c)));
-for i = 1:a
-    for j = 1:b
+for j = 1:b
+    for i = 1:a
         if(mapTraining(i,j) ~= 0)
-            Y(i*j, mapTraining(i,j)) = 1;
+            Y(sub2ind([a,b], i, j), mapTraining(i,j)) = 1;
         end
     end
 end
