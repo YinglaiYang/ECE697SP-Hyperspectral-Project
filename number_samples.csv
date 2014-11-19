@@ -1,0 +1,20 @@
+Class Idx,Mineral classes,Abbreviations,Training samples
+1,buddington,budd,5
+2,calcite,cal,1000
+3,chalcedony,chal,1000
+4,chlorite-scarn,chlor,6
+5,dickite,dick,55
+6,halloysite,halloy,1000
+7,jarosite-K,jaro,5
+8,K-alunite 150c,kalu150,41
+9,K-alunite 250c,kalu250,545
+10,K-alunite 450c,kalu450,21
+11,kaolinite pxl,kaopxl,1000
+12,kaolinite wxl,kaowxl,608
+13,montmorillonite,montna,633
+14,muscovite Alrich,muscAlh,1000
+15,muscovite altered,muschalter,1000
+16,muscovite unaltered,muscunalter,51
+17,nontronite,nontr,53
+18,Na40-alunite 400c,nalu400,5
+19,Na82-alunite 100c,nalu100,1000
