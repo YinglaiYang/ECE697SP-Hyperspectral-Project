@@ -1,4 +1,4 @@
-function F_star = sesuGraph_01(Y, X, affinityFun)
+function F_star = sesuGraph_01(Y, X, kernelFun, nystroemFraction)
 %SESUGRAPH_01 Semi-supervised graph-based image classification for our
 %hyperspectral project. 
 %
@@ -25,9 +25,9 @@ function F_star = sesuGraph_01(Y, X, affinityFun)
 %       it is simply too big. It is a [n,n]-matrix, which means almost
 %       3.6e11 entries! It **will** block your memory!)
 %
-% # affinityFun - function handle: double = @affinityFun([double] x1, [double] x2) |
-%                 A function handle that returns the affinity between two
-%                 feature sets. Takes two vectors.
+% # kernelFun - function handle: double = @affinityFun([double] x1, [double] x2) |
+%               A function handle that returns the affinity between two
+%               feature sets. Takes two vectors.
 %
 % Output
 % ======
@@ -35,6 +35,43 @@ function F_star = sesuGraph_01(Y, X, affinityFun)
 %            a pixel in the image. One column per row contains a '1' to
 %            denote that the pixel of that row was classified as the class
 %            of that column.
+
+%% Parameters etc.
+[n, c] = size(Y);
+
+[~,~,d] = size(X);
+X = reshape(X, n, d);
+
+m = round(nystroemFraction*n);
+
+%% Nystroem method
+NU = NystroemUniform(n, m);
+
+% Precalculate d, where D = diag(d)
+d = zeros(m,1);
+
+parfor k=1:m
+    disp(['k: ' num2str(k)]);
+%     for l=1:n
+%         d(k) = d(k) + getAffinity(X, k, l, kernelFun);
+%     end
+    d(k) = sum(getAffinities(X, NU.sampledIndices(k), kernelFun));
+end
+
+S_mm = zeros(m,m);
+%calculate S_mm
+parfor i=1:m
+    disp(['i: ' num2str(i)]);
+    for j=1:m
+        disp(['j: ' num2str(j)]);
+        if i~=j                        
+            S_mm(i,j) = getAffinity(X, NU.sampledIndices(i), NU.sampledIndices(j), kernelFun) / (sqrt(d(i)) + sqrt(d(j)));
+        end
+        % If i==j, W_ij = 0
+    end
+end
+
+[V_mm, Lambda_mm] = eig(S_mm);
 
 
 end
