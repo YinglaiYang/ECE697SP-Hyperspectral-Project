@@ -1,4 +1,4 @@
-function F_star = sesuGraph_01(Y, X, kernelFun, nystroemFraction)
+function F_star = sesuGraph(Y, X, alpha, kernelFun, nystroemFraction)
 %SESUGRAPH_01 Semi-supervised graph-based image classification for our
 %hyperspectral project. 
 %
@@ -39,39 +39,34 @@ function F_star = sesuGraph_01(Y, X, kernelFun, nystroemFraction)
 %% Parameters etc.
 [n, c] = size(Y);
 
-[~,~,d] = size(X);
-X = reshape(X, n, d);
-
 m = round(nystroemFraction*n);
 
 %% Nystroem method
 NU = NystroemUniform(n, m);
+NU_sampledIndices = NU.sampledIndices;
 
-% Precalculate d, where D = diag(d)
-d = zeros(m,1);
+% calculate W_nm
+W_nm = zeros(n, m);
 
-parfor k=1:m
+for k=1:m
     disp(['k: ' num2str(k)]);
-%     for l=1:n
-%         d(k) = d(k) + getAffinity(X, k, l, kernelFun);
-%     end
-    d(k) = sum(getAffinities(X, NU.sampledIndices(k), kernelFun));
+    W_nm(:,k) = getAffinitiesN(X, NU_sampledIndices(k), kernelFun);
 end
 
-S_mm = zeros(m,m);
-%calculate S_mm
-parfor i=1:m
-    disp(['i: ' num2str(i)]);
-    for j=1:m
-        disp(['j: ' num2str(j)]);
-        if i~=j                        
-            S_mm(i,j) = getAffinity(X, NU.sampledIndices(i), NU.sampledIndices(j), kernelFun) / (sqrt(d(i)) + sqrt(d(j)));
-        end
-        % If i==j, W_ij = 0
-    end
-end
+W_mm = W_nm(NU_sampledIndices,:);
+
+colsum_W_nm = sum(W_nm, 1);
+
+d_n = ((colsum_W_nm * W_mm^-1) * W_nm.').';                                      clear W_mm;
+d_m = d_n(NU_sampledIndices);
+
+S_nm = spdiags(d_n.^-0.5, 0, n, n) * W_nm * sparse(diag(d_m.^-0.5));             clear W_nm;
+S_mm = S_nm(NU_sampledIndices,:);
 
 [V_mm, Lambda_mm] = eig(S_mm);
+
+V_tilde = S_nm * V_mm;                                                     clear S_nm; clear V_mm;
+Lambda_tilde = Lambda_mm^-1;                                               clear Lambda_mm;
 
 
 end
