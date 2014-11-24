@@ -1,4 +1,4 @@
-function F_star = sesuGraph(Y, X, alpha, kernelFun, nystroemFraction)
+function F_star = sesuGraph(Y, X, alpha, kernelFun, nystroemFraction, pFraction)
 %SESUGRAPH_01 Semi-supervised graph-based image classification for our
 %hyperspectral project. 
 %
@@ -39,34 +39,54 @@ function F_star = sesuGraph(Y, X, alpha, kernelFun, nystroemFraction)
 %% Parameters etc.
 [n, c] = size(Y);
 
-m = round(nystroemFraction*n);
+m = round(nystroemFraction * n);
+p = ceil(pFraction * m);
 
 %% Nystroem method
 NU = NystroemUniform(n, m);
 NU_sampledIndices = NU.sampledIndices;
+
+l = max(NU_sampledIndices);
 
 % calculate W_nm
 W_nm = zeros(n, m);
 
 for k=1:m
     disp(['k: ' num2str(k)]);
-    W_nm(:,k) = getAffinitiesN(X, NU_sampledIndices(k), kernelFun);
+    W_nm(:,k) = getAffinities(X, NU_sampledIndices(k), kernelFun);
 end
 
 W_mm = W_nm(NU_sampledIndices,:);
+abnormalityCheck(W_mm);
 
 colsum_W_nm = sum(W_nm, 1);
+abnormalityCheck(colsum_W_nm);
 
-d_n = ((colsum_W_nm * W_mm^-1) * W_nm.').';                                      clear W_mm;
+d_n = ((colsum_W_nm * W_mm^-1) * W_nm.').';                                clear W_mm;
+abnormalityCheck(d_n);
 d_m = d_n(NU_sampledIndices);
+abnormalityCheck(d_m);
 
-S_nm = spdiags(d_n.^-0.5, 0, n, n) * W_nm * sparse(diag(d_m.^-0.5));             clear W_nm;
+S_nm = spdiags(d_n(:).^-0.5, 0, n, n) * ... 
+            ( W_nm * spdiags(d_m(:).^-0.5, 0, m, m) );                     clear W_nm;
+% S_nm = W_nm;                                                               clear W_nm;
+
+abnormalityCheck(S_nm);
+
 S_mm = S_nm(NU_sampledIndices,:);
+abnormalityCheck(S_mm);
 
-[V_mm, Lambda_mm] = eig(S_mm);
+[V_mp, Lambda_pp] = eigs(S_mm, p);                                         clear S_mm;
 
-V_tilde = S_nm * V_mm;                                                     clear S_nm; clear V_mm;
-Lambda_tilde = Lambda_mm^-1;                                               clear Lambda_mm;
+V_tilde = sqrt(m/n) * S_nm * (V_mp * Lambda_pp^-1);                        clear S_nm; clear V_mp;
+Lambda_tilde = (n/m) * Lambda_pp;                                               clear Lambda_pp;
 
+evaluation1 = ( Lambda_tilde * (V_tilde.' * V_tilde) ...
+                  - spdiags(alpha^-1 * ones(p,1), 0, p, p) )^-1;
+              
+evaluation2 = V_tilde * ( evaluation1 * ...
+                              (Lambda_tilde * (V_tilde.' * Y)) );          clear evaluation1;
+                          
+F_star = (1-alpha) * (Y - evaluation2);                       
 
 end

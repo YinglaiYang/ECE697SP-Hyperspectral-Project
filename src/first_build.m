@@ -12,5 +12,5 @@ X = reshape(hsi, n, d);
 clear hsi;
 
 runtime = tic;
-sesuGraph(Y, X, 0.5, @(x1,x2) RBF_kernel(x1, x2, 0.01), 0.0001);
+F_star = sesuGraph(Y, X, 0.1, @(x1,x2) RBF_kernel(x1, x2, 0.7), 5e-4, 1);
 toc(runtime)
