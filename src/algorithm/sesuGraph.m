@@ -69,7 +69,6 @@ abnormalityCheck(d_m);
 
 S_nm = spdiags(d_n(:).^-0.5, 0, n, n) * ... 
             ( W_nm * spdiags(d_m(:).^-0.5, 0, m, m) );                     clear W_nm;
-% S_nm = W_nm;                                                               clear W_nm;
 
 abnormalityCheck(S_nm);
 
@@ -78,8 +77,8 @@ abnormalityCheck(S_mm);
 
 [V_mp, Lambda_pp] = eigs(S_mm, p);                                         clear S_mm;
 
-V_tilde = sqrt(m/n) * S_nm * (V_mp * Lambda_pp^-1);                        clear S_nm; clear V_mp;
-Lambda_tilde = (n/m) * Lambda_pp;                                               clear Lambda_pp;
+V_tilde = sqrt(n/m) * S_nm * (V_mp * Lambda_pp^-1);                        clear S_nm; clear V_mp;
+Lambda_tilde = (n/m) * Lambda_pp;                                          clear Lambda_pp;
 
 evaluation1 = ( Lambda_tilde * (V_tilde.' * V_tilde) ...
                   - spdiags(alpha^-1 * ones(p,1), 0, p, p) )^-1;
