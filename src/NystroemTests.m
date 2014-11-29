@@ -9,7 +9,7 @@ set_self_affinity_to_zero = true;
 regulization_param = 0;
 
 n = 100;
-m = 5;
+m = 20;
 
 p_array = ceil([0.01 0.05 0.075 0.1 0.15 0.25 0.5 0.75 1] * m);
 
@@ -28,11 +28,7 @@ for q=1:length(p_array)
 
         x = rand(n,1);
 
-        S = zeros(n,n);
-
-        for k=1:n
-            S(k,:) = getAffinities2(x, k, @(x1,x2) RBF_kernel(x1, x2, 0.1)) + regulization_param;
-        end
+        S = getRBF_AffinityMatrix(x, 1:n, 0.1);
 
         if set_self_affinity_to_zero
             S = S - diag(diag(S));
