@@ -1,4 +1,4 @@
-function F_star = sesuGraph_trainingGrid(Y, X, alpha, kernelFun, grid)
+function F_star = sesuGraph_trainingGrid(Y, X, alpha, sigma, m_fraction)
 %SESUGRAPH_01 Semi-supervised graph-based image classification for our
 %hyperspectral project. 
 %
@@ -39,19 +39,17 @@ function F_star = sesuGraph_trainingGrid(Y, X, alpha, kernelFun, grid)
 %% Parameters etc.
 [n, c] = size(Y);
 
-m = length(grid); %0 is not a class
-p = 10;
+m = ceil(m_fraction * n);
+
+reg = 1e-6;
 
 %% Nystroem method
-NU_sampledIndices = grid;
+NU = NystroemUniform(n, m);
+NU_sampledIndices = NU.sampledIndices;
 
 % calculate W_nm
-W_nm = zeros(n, m);
-
-for k=1:m
-    disp(['k: ' num2str(k)]);
-    W_nm(:,k) = getAffinities2(X, NU_sampledIndices(k), kernelFun);
-end
+W_nm = getRBF_AffinityMatrix(X, NU_sampledIndices, sigma);
+fprintf('W_nm has %d negative elements.\n', numel(find(W_nm < 0)) );
 
 abnormalityCheck(W_nm);
 
@@ -65,13 +63,18 @@ symmetryCheck(W_mm);
 
 % memory;
 
-[V_W_mm, Lambda_W_mm] = eigs(W_mm, p);
+[V_W_mm, Lambda_W_mm] = eig(W_mm);
+p_W_index = diag(Lambda_W_mm) > reg;
 
-colsum_V_W_tilde = sum(sqrt(m/n) * W_nm * (V_W_mm * Lambda_W_mm^-1), 1);
+V_W_mp = V_W_mm(:,p_W_index);                                              clear V_W_mm;
+Lambda_W_pp = Lambda_W_mm(p_W_index,p_W_index);                            clear Lambda_W_mm;
+
+colsum_V_W_tilde = sum(sqrt(m/n) * W_nm * (V_W_mp * Lambda_W_pp^-1), 1);
 abnormalityCheck(colsum_V_W_tilde);
 
-d_n = ((colsum_V_W_tilde * (n/m) * Lambda_W_mm) * (sqrt(m/n) * W_nm * (V_W_mm * Lambda_W_mm^-1)).').';  
+d_n = (colsum_V_W_tilde * (n/m) * Lambda_W_pp) * (sqrt(m/n) * W_nm * (V_W_mp * Lambda_W_pp^-1)).';  
 d_n = d_n - 1;
+d_n = d_n(:); %enforce column vector;
 
 abnormalityCheck(d_n);
 fprintf('d_n has %d negative elements.\n', numel(find(d_n < 0)) );
@@ -80,7 +83,7 @@ d_m = d_n(NU_sampledIndices);
 abnormalityCheck(d_m);
 
 S_nm = spdiags(1./sqrt(d_n(:)), 0, n, n) * ... 
-            ( W_nm * spdiags(1./sqrt(d_m(:)), 0, m, m) );                     clear W_nm;
+            ( W_nm * spdiags(1./sqrt(d_m(:)), 0, m, m) );                  clear W_nm;
 
 % S_nm = zeros(size(W_nm));
 % 
@@ -97,25 +100,33 @@ abnormalityCheck(S_nm);
 % memory;
 
 %Disabled section - this version makes S_mm unsymmetric
-% S_mm = spdiags(d_m(:).^-0.5, 0, m, m) * ... 
-%             ( W_mm * spdiags(d_m(:).^-0.5, 0, m, m) );                     clear W_mm;
+S_mm = spdiags(1./sqrt(d_m(:)), 0, m, m) * ... 
+            W_mm * spdiags(1./sqrt(d_m(:)), 0, m, m);                      clear W_mm;
+        
+S_mm = (S_mm + S_mm) / 2; %Enforce symmetry - would otherwise not be given because of extremely small numerical differences
 
-S_mm = zeros(size(W_mm));
-
-for i=1:size(W_mm, 1)
-    for j=1:size(W_mm, 2)
-        S_mm(i,j) = W_mm(i,j) / (sqrt(d_m(i)) * sqrt(d_m(j)));
-    end
-end
-
-                                                                           clear W_mm;
+%Disabled section - slow version to get symmetry; no more needed
+% S_mm = zeros(size(W_mm));
+% 
+% for i=1:size(W_mm, 1)
+%     for j=1:size(W_mm, 2)
+%         S_mm(i,j) = W_mm(i,j) / (sqrt(d_m(i)) * sqrt(d_m(j)));
+%     end
+% end
+% 
+%                                                                            clear W_mm;
 
 abnormalityCheck(S_mm);
 symmetryCheck(S_mm);
 
-[V_mp, Lambda_pp] = eigs(S_mm, p);                                         clear S_mm;
+[V_mm, Lambda_mm] = eig(S_mm);                                             clear S_mm;
+p_index = diag(Lambda_mm) > reg; %prevent singularity
+p = nnz(p_index);
 
-V_tilde = sqrt(n/m) * S_nm * (V_mp * Lambda_pp^-1);                        clear S_nm; clear V_mp;
+V_mp = V_mm(:,p_index);                                                    clear V_mm;
+Lambda_pp = Lambda_mm(p_index,p_index);                                    clear Lambda_mm;
+
+V_tilde = sqrt(m/n) * S_nm * (V_mp * Lambda_pp^-1);                        clear S_nm; clear V_mp;
 Lambda_tilde = (n/m) * Lambda_pp;                                          clear Lambda_pp;
 
 % memory;
