@@ -36,7 +36,7 @@ for i = 1:ceil(a/width)
     for j = 1:ceil(b/height)
         if(i < ceil(a/width) &&  j < ceil(b/height))
             window = [(i-1)*width+1, (j-1)*height+1, i*width, j*height];
-            [newX, newY] = getSubwindowData(mapTrain, hsi, window);
+            [~, newX, newY] = getSubwindowData(mapTrain, hsi, window);
             f_star = classifier(newY, newX);
             f_star = reshape(f_star(1:width*height,:), width, height, c);
             F_star((i-1)*width+1:i*width, (j-1)*height+1:j*height,:) = f_star;
@@ -44,7 +44,7 @@ for i = 1:ceil(a/width)
         end     
         if( i < ceil(a/width) && j == ceil(b/height))
             window = [(i-1)*width+1, b-height+1, i*width, b];
-            [newX, newY] = getSubwindowData(mapTrain, hsi, window);
+            [~, newX, newY] = getSubwindowData(mapTrain, hsi, window);
             f_star = classifier(newY, newX);
             f_star = reshape(f_star(1:width*height,:), width, height, c);
             F_star((i-1)*width+1:i*width, (j-1)*height+1:b,:) = f_star(:, height-b+(j-1)*height+1:height, :);
@@ -52,7 +52,7 @@ for i = 1:ceil(a/width)
         end
         if(i == ceil(a/width) && j < ceil(b/height))
             window = [a-width+1, (j-1)*height+1, a, j*height];
-            [newX, newY] = getSubwindowData(mapTrain, hsi, window);
+            [~, newX, newY] = getSubwindowData(mapTrain, hsi, window);
             f_star = classifier(newY, newX);
             f_star = reshape(f_star(1:width*height,:), width, height, c);
             F_star((i-1)*width+1:a, (j-1)*height+1:j*height, :) = f_star(width-a+(i-1)*width+1:width,:,:);
@@ -60,7 +60,7 @@ for i = 1:ceil(a/width)
         end
         if(i == ceil(a/width) &&  j == ceil(b/height))
             window = [a-width+1, b-height+1, a, b];          
-            [newX, newY] = getSubwindowData(mapTrain, hsi, window);
+            [~, newX, newY] = getSubwindowData(mapTrain, hsi, window);
             f_star = classifier(newY, newX);
             f_star = reshape(f_star(1:width*height,:), width, height, c);
             F_star((i-1)*width+1:a, (j-1)*height+1:b, :) = f_star(width-a+(i-1)*width+1:width, height-b+(j-1)*height+1:height,:);
