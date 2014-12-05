@@ -61,7 +61,7 @@ W_mm = W_nm(NU_sampledIndices,:);
 abnormalityCheck(W_mm);
 symmetryCheck(W_mm);
 
-save('tmp_Wnm.mat', 'W_nm');
+% save('tmp_Wnm.mat', 'W_nm');
 
 % memory;
 
