@@ -45,20 +45,24 @@ for a = 1:length(alphas)
         cvErrorRate = zeros(1, 5);
         
         for cv = 1:5   %5-fold crossvalidation
-            cvTestIDX  = (cvIDX == cv);
-            cvTrainIDX = (cvIDX ~= cv);
-            
-            cvMapTrain = zeros(size(mapTrain));
-            cvMapTrain(refIDX(cvTrainIDX)) = mapTrain(refIDX(cvTrainIDX));
-            
-            cvMapTest = zeros(size(mapTrain));
-            cvMapTest(refIDX(cvTestIDX)) = mapTrain(refIDX(cvTestIDX));
-            
-            % Do prediction
-            predictionMap = randomizedSetsClassifier(hsi, cvMapTrain, alpha, sigma, nystroemFraction, RSVD, sectionSize);
-            
-            % Check error rate
-            cvErrorRate(cv) = errorRate(predictionMap, cvMapTest);
+            try
+                cvTestIDX  = (cvIDX == cv);
+                cvTrainIDX = (cvIDX ~= cv);
+
+                cvMapTrain = zeros(size(mapTrain));
+                cvMapTrain(refIDX(cvTrainIDX)) = mapTrain(refIDX(cvTrainIDX));
+
+                cvMapTest = zeros(size(mapTrain));
+                cvMapTest(refIDX(cvTestIDX)) = mapTrain(refIDX(cvTestIDX));
+
+                % Do prediction
+                predictionMap = randomizedSetsClassifier(hsi, cvMapTrain, alpha, sigma, nystroemFraction, RSVD, sectionSize);
+
+                % Check error rate
+                cvErrorRate(cv) = errorRate(predictionMap, cvMapTest);
+            catch
+                cvErrorRate(cv) = 1;
+            end
         end
         
         avg_cvErrorRate = mean(cvErrorRate);
