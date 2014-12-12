@@ -17,8 +17,6 @@ X = reshape(hsi, n, d);
 windowHeight = 100;
 windowWidth = 100;
 
-testSetIDX = mapTest > 0;
-
 %% Crossvalidation (5-fold)
 [height, width] = size(mapTrain);
 
@@ -53,6 +51,8 @@ for a = 1:length(alphas)
 
                 cvMapTest = zeros(size(mapTrain));
                 cvMapTest(refIDX(testIDX)) = mapTrain(refIDX(testIDX));
+                
+                testSetIDX = cvMapTest > 0;
 
                 % Do prediction
                 predictionMap = windowedClassistClassifier(hsi, cvMapTrain, testSetIDX, alpha, sigma, nystroemFraction, RSVD, windowHeight, windowWidth);
@@ -61,6 +61,7 @@ for a = 1:length(alphas)
                 cvErrorRate(cv) = errorRate(predictionMap, cvMapTest);
             catch
                 cvErrorRate(cv) = 1;
+                disp('######### Something went wrong #########');
             end
         end
         
@@ -78,7 +79,7 @@ for a = 1:length(alphas)
     end
     
     figure, semilogx(sigmas, errorOverSigma);
-    title(sprintf('errors for \alpha = %d', alpha));
+    title(sprintf('errors for \\alpha = %d', alpha));
     xlabel('\sigma');
     ylabel('Cross validation error in percent');
     snapnow;

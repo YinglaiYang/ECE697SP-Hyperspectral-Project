@@ -76,7 +76,7 @@ for a = 1:length(alphas)
     end
     
     figure, semilogx(sigmas, errorOverSigma);
-    title(sprintf('errors for \alpha = %d', alpha));
+    title(sprintf('errors for \\alpha = %d', alpha));
     xlabel('\sigma');
     ylabel('Cross validation error in percent');
     snapnow;

@@ -5,7 +5,6 @@ clear, clc, close all;
 
 load hsi;
 load mapTrain;
-load mapTest; %Only location of test points are used; not the labels!!
 
 c = 19;
 
@@ -18,7 +17,6 @@ X = reshape(hsi, n, d);
 
 %% Specific parameters go here!
 sectionSize = 10000;
-testSetIDX = mapTest > 0;
 
 %% Crossvalidation (5-fold)
 [height, width] = size(mapTrain);
@@ -54,6 +52,8 @@ for a = 1:length(alphas)
 
                 cvMapTest = zeros(size(mapTrain));
                 cvMapTest(refIDX(cvTestIDX)) = mapTrain(refIDX(cvTestIDX));
+                
+                testSetIDX = cvMapTest > 0;
 
                 % Do prediction
                 predictionMap = randomizedSetsClassistClassifier(hsi, cvMapTrain, testSetIDX, alpha, sigma, nystroemFraction, RSVD, sectionSize);
@@ -62,6 +62,7 @@ for a = 1:length(alphas)
                 cvErrorRate(cv) = errorRate(predictionMap, cvMapTest);
             catch
                 cvErrorRate(cv) = 1;
+                disp('######### Something went wrong #########');
             end
         end
         
@@ -79,7 +80,7 @@ for a = 1:length(alphas)
     end
     
     figure, semilogx(sigmas, errorOverSigma);
-    title(sprintf('errors for \alpha = %d', alpha));
+    title(sprintf('errors for \\alpha = %d', alpha));
     xlabel('\sigma');
     ylabel('Cross validation error in percent');
     snapnow;
