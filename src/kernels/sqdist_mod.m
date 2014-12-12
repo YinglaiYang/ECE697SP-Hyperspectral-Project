@@ -32,7 +32,7 @@ b2 = sum(X(nystroemIDX,:) .* X(nystroemIDX,:), 2);
 
 AB = X * X(nystroemIDX,:).';
 
-dist2 = repmat(a2(:), [1 m]) + repmat(b2(:).', [n 1]) - 2*AB;
+dist2 = abs(repmat(a2(:), [1 m]) + repmat(b2(:).', [n 1]) - 2*AB);
 
 end
 

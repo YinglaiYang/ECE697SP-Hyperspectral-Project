@@ -29,11 +29,11 @@ clc, clear, close all;
 load hsi;
 
 n = 1000;
-sigma = 0.3;
+sigma = 0.02;
 
-runs = 1e2;
+runs = 0.5e2;
 
-m_fraction_array = [1e-2, 2e-2, 5e-2, 1e-1, 2e-1, 3e-1, 7e-1];
+m_fraction_array = [1e-2, 1.5e-2, 2.5e-2, 4e-2, 5e-2, 7.5e-2, 1e-1, 2e-1, 3e-1, 5e-1];
 
 m_array = ceil(m_fraction_array * n);
 
@@ -57,9 +57,12 @@ error_W_K1 = zeros(1, length(m_array));
 error_d_K1 = zeros(1, length(m_array));
 error_S_K1 = zeros(1, length(m_array));
 
-error_W_K2 = zeros(1, length(m_array));
-error_d_K2 = zeros(1, length(m_array));
+error_W_K_alt = zeros(1, length(m_array));
+error_d_K_alt = zeros(1, length(m_array));
 error_S_K2 = zeros(1, length(m_array));
+
+error_W_R1 = zeros(1, length(m_array));
+error_d_R1 = zeros(1, length(m_array));
 
 %% 1. Setup tests
 W_1 = exp(-sqdist(X.', X.') / (2*sigma^2));
@@ -144,12 +147,21 @@ for l=1:length(m_array)
         error_W_K1(l) = error_W_K1(l) + norm(W_1 - W_1_tilde, 'fro');
         error_d_K1(l) = error_d_K1(l) + norm(d_n_1(:) - d_1_tilde(:));
         
-        error_W_K2(l) = error_W_K2(l) + norm(W_1 - W_1_tilde_alt, 'fro');
-        error_d_K2(l) = error_d_K2(l) + norm(d_n_1(:) - d_1_tilde_alt(:));
+        error_W_K_alt(l) = error_W_K_alt(l) + norm(W_1 - W_1_tilde_alt, 'fro');
+        error_d_K_alt(l) = error_d_K_alt(l) + norm(d_n_1(:) - d_1_tilde_alt(:));
         
         %% 2.4 K-Means Nystroem approximation of W_2
-        % Does not make sense?
+        % Does not make sense.
         
+        %% 2.5 Randomized SVD approximation of W_1
+        p = 10; q = 2;
+        k=ceil(0.1*m);
+        
+        [U,D, e] = rnys(W_1,k,m,mIDX,p,q);
+        d_1_R = sum(U) * D * U.';
+        
+        error_W_R1(l) = error_W_R1(l) + e;
+        error_d_R1(l) = error_d_R1(l) + norm(d_n_1(:) - d_1_R(:));
     end
 end
 
@@ -162,7 +174,77 @@ error_d_U2 = error_d_U2 / runs;
 error_W_K1 = error_W_K1 / runs;
 error_d_K1 = error_d_K1 / runs;
 
-error_W_K2 = error_W_K2 / runs;
-error_d_K2 = error_d_K2 / runs;
+error_W_K_alt = error_W_K_alt / runs;
+error_d_K_alt = error_d_K_alt / runs;
+
+error_W_R1 = error_W_R1 / runs;
+error_d_R1 = error_d_R1 / runs;
+
+%% Plot results
+%% Errors for uniform sampling with Gram matrix with self affinity. 
+% First matrix norm for W approximation:
+figure, plot(m_fraction_array, error_W_U1);
+xlabel('Nystroem fraction of sample numbers');
+ylabel('Frobenius norm of difference');
+title('Uniformly sampled Nystroem using Gram matrix - Approximation error of W');
+snapnow;
+
+% Then error for the approximation of d:
+figure, plot(m_fraction_array, error_d_U1);
+xlabel('Nystroem fraction of sample numbers');
+ylabel('Norm of difference');
+title('Uniformly sampled Nystroem using Gram matrix - Approximation error of d');
+snapnow;
+
+%% Errors for uniform sampling using matrix without self affinity. 
+% First matrix norm for W approximation:
+figure, plot(m_fraction_array, error_W_U2);
+xlabel('Nystroem fraction of sample numbers');
+ylabel('Frobenius norm of difference');
+title('Uniformly sampled Nystroem using matrix without self affinity - Approximation error of W');
+snapnow;
+
+% Then error for the approximation of d:
+figure, plot(m_fraction_array, error_d_U2);
+xlabel('Nystroem fraction of sample numbers');
+ylabel('Norm of difference');
+title('Uniformly sampled Nystroem using matrix without self affinity - Approximation error of d');
+snapnow;
+
+%% Errors for K-means Nystroem using Gram matrix. 
+% First matrix norm for W approximation:
+figure, plot(m_fraction_array, error_W_K_alt);
+xlabel('Nystroem fraction of sample numbers');
+ylabel('Frobenius norm of difference');
+title('K-means Nystroem using Gram matrix - Approximation error of W');
+snapnow;
+
+% Then error for the approximation of d:
+figure, plot(m_fraction_array, error_d_K_alt);
+xlabel('Nystroem fraction of sample numbers');
+ylabel('Norm of difference');
+title('K-means Nystroem using Gram matrix - Approximation error of d');
+snapnow;
+
+%% Errors for randomised SVD Nystroem method
+% First matrix norm for W approximation:
+figure, plot(m_fraction_array, error_W_R1);
+xlabel('Nystroem fraction of sample numbers');
+ylabel('Frobenius norm of difference');
+title('RSVD Nystroem using Gram matrix - Approximation error of W');
+snapnow;
+
+% Then error for the approximation of d:
+figure, plot(m_fraction_array, error_d_R1);
+xlabel('Nystroem fraction of sample numbers');
+ylabel('Norm of difference');
+title('RSVD Nystroem using Gram matrix - Approximation error of d');
+snapnow;
 
 beep;
+
+
+
+
+
+

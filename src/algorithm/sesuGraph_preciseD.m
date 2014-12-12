@@ -1,6 +1,7 @@
-function F_star = sesuGraph_trainingGrid(Y, X, alpha, sigma, m_fraction)
-%SESUGRAPH_01 Semi-supervised graph-based image classification for our
-%hyperspectral project. 
+function [ F_star ] = sesuGraph_preciseD(Y, X, alpha, sigma, nystroemFraction)
+%SESUGRAPH_WINDOWED Semi-supervised graph-based image classification for our
+%hyperspectral project. Assume small windows for which the computation time
+%of the normalisation factors is low.
 %
 % First version (prototype). Dumbed down: It only uses spectral features
 % and a simple Nyström algorithm with uniformly distributed sampling.
@@ -39,13 +40,36 @@ function F_star = sesuGraph_trainingGrid(Y, X, alpha, sigma, m_fraction)
 %% Parameters etc.
 [n, c] = size(Y);
 
-m = ceil(m_fraction * n);
+m = ceil(nystroemFraction * n);
 
 reg = 1e-6;
 
 %% Nystroem method
 NU = NystroemUniform(n, m);
 NU_sampledIndices = NU.sampledIndices;
+
+% calculate d_n perfectly with a memory light method (slower)
+d_n = zeros(n, 1);
+
+sectionBorders = [1:m:n, n];
+
+for s=1:length(sectionBorders) - 1
+    sectionIndices = sectionBorders(s) : sectionBorders(s+1);
+    
+    W_nm_section = getRBF_AffinityMatrix(X, sectionIndices, sigma);
+    
+    d_n(sectionIndices) = sum(W_nm_section);
+end
+clear W_nm_section;
+
+d_n = d_n - 1;
+d_n = d_n(:); %enforce column vector;
+
+abnormalityCheck(d_n);
+fprintf('d_n has %d negative elements.\n', numel(find(d_n < 0)) );
+
+d_m = d_n(NU_sampledIndices);
+abnormalityCheck(d_m);
 
 % calculate W_nm
 W_nm = getRBF_AffinityMatrix(X, NU_sampledIndices, sigma);
@@ -59,6 +83,22 @@ W_mm = W_nm(NU_sampledIndices,:);
 abnormalityCheck(W_mm);
 symmetryCheck(W_mm);
 
+
+%% Test
+[V_W_mm, Lambda_W_mm] = eig(W_mm);
+p_W_index = diag(Lambda_W_mm) > reg;
+
+V_W_mp = V_W_mm(:,p_W_index);                                              clear V_W_mm;
+Lambda_W_pp = Lambda_W_mm(p_W_index,p_W_index);                            clear Lambda_W_mm;
+
+colsum_V_W_tilde = sum(sqrt(m/n) * W_nm * (V_W_mp * Lambda_W_pp^-1), 1);
+abnormalityCheck(colsum_V_W_tilde);
+
+d_n2 = (colsum_V_W_tilde * (n/m) * Lambda_W_pp) * (sqrt(m/n) * W_nm * (V_W_mp * Lambda_W_pp^-1)).';  
+d_n2 = d_n2 - 1;
+d_n2 = d_n2(:); %enforce column vector;
+%% ##############################################
+
 % save('tmp_Wnm.mat', 'W_nm');
 
 % memory;
@@ -71,16 +111,6 @@ Lambda_W_pp = Lambda_W_mm(p_W_index,p_W_index);                            clear
 
 colsum_V_W_tilde = sum(sqrt(m/n) * W_nm * (V_W_mp * Lambda_W_pp^-1), 1);
 abnormalityCheck(colsum_V_W_tilde);
-
-d_n = (colsum_V_W_tilde * (n/m) * Lambda_W_pp) * (sqrt(m/n) * W_nm * (V_W_mp * Lambda_W_pp^-1)).';  
-d_n = d_n - 1;
-d_n = d_n(:); %enforce column vector;
-
-abnormalityCheck(d_n);
-fprintf('d_n has %d negative elements.\n', numel(find(d_n < 0)) );
-
-d_m = d_n(NU_sampledIndices);
-abnormalityCheck(d_m);
 
 S_nm = spdiags(1./sqrt(d_n(:)), 0, n, n) * ... 
             ( W_nm * spdiags(1./sqrt(d_m(:)), 0, m, m) );                  clear W_nm;
@@ -103,7 +133,7 @@ abnormalityCheck(S_nm);
 S_mm = spdiags(1./sqrt(d_m(:)), 0, m, m) * ... 
             W_mm * spdiags(1./sqrt(d_m(:)), 0, m, m);                      clear W_mm;
         
-S_mm = (S_mm + S_mm) / 2; %Enforce symmetry - would otherwise not be given because of extremely small numerical differences
+S_mm = (S_mm + S_mm.') / 2; %Enforce symmetry - would otherwise not be given because of extremely small numerical differences
 
 %Disabled section - slow version to get symmetry; no more needed
 % S_mm = zeros(size(W_mm));
@@ -142,3 +172,4 @@ evaluation2 = A_inv * V_tilde * ( evaluation1 * ...
 F_star = (1-alpha) * (A_inv * Y - evaluation2);                       
 
 end
+

@@ -1,4 +1,4 @@
-function F_star = sesuGraph(Y, X, alpha, sigma, nystroemFraction)
+function F_star = sesuGraph_RSVD(Y, X, alpha, sigma, nystroemFraction, RSVD)
 %SESUGRAPH_01 Semi-supervised graph-based image classification for our
 %hyperspectral project. 
 %
@@ -40,8 +40,9 @@ function F_star = sesuGraph(Y, X, alpha, sigma, nystroemFraction)
 [n, c] = size(Y);
 
 m = ceil(nystroemFraction * n);
+RSVD.k = ceil(RSVD.k_fraction * m);
 
-reg = 1e-6;
+reg = 1e-30;
 
 %% Nystroem method
 NU = NystroemUniform(n, m);
@@ -59,21 +60,34 @@ W_mm = W_nm(NU_sampledIndices,:);
 abnormalityCheck(W_mm);
 symmetryCheck(W_mm);
 
+%%%% perform truncated SVD on m-by-m matrix W
+
+[V_W,D_W] = rsvd(W_mm,RSVD.k,RSVD.p,RSVD.q);
+
+%%%% form the approximation
+
+U_W = W_nm * ( sqrt(m/n) * V_W );                                          clear V_W;
+D_W = (n/m) * diag(diag(D_W).^-1);
+
+d_n = sum(U_W) * D_W * U_W.';                                              clear U_W; clear D_W;
+
 % save('tmp_Wnm.mat', 'W_nm');
 
 % memory;
 
-[V_W_mm, Lambda_W_mm] = eig(W_mm);
-p_W_index = diag(Lambda_W_mm) > reg;
-
-V_W_mp = V_W_mm(:,p_W_index);                                              clear V_W_mm;
-Lambda_W_pp = Lambda_W_mm(p_W_index,p_W_index);                            clear Lambda_W_mm;
-
-colsum_V_W_tilde = sum(sqrt(m/n) * W_nm * (V_W_mp * Lambda_W_pp^-1), 1);
-abnormalityCheck(colsum_V_W_tilde);
-
-d_n = (colsum_V_W_tilde * (n/m) * Lambda_W_pp) * (sqrt(m/n) * W_nm * (V_W_mp * Lambda_W_pp^-1)).';  
+% [V_W_mm, Lambda_W_mm] = eig(W_mm);
+% p_W_index = diag(Lambda_W_mm) > reg;
+% 
+% V_W_mp = V_W_mm(:,p_W_index);                                              clear V_W_mm;
+% Lambda_W_pp = Lambda_W_mm(p_W_index,p_W_index);                            clear Lambda_W_mm;
+% 
+% colsum_V_W_tilde = sum(sqrt(m/n) * W_nm * (V_W_mp * Lambda_W_pp^-1), 1);
+% abnormalityCheck(colsum_V_W_tilde);
+% 
+% d_n = (colsum_V_W_tilde * (n/m) * Lambda_W_pp) * (sqrt(m/n) * W_nm * (V_W_mp * Lambda_W_pp^-1)).';  
+% d_n = d_n - 1;
 d_n = d_n - 1;
+d_n(d_n == 0) = reg;
 d_n = d_n(:); %enforce column vector;
 
 abnormalityCheck(d_n);
@@ -92,8 +106,8 @@ S_nm = spdiags(1./sqrt(d_n(:)), 0, n, n) * ...
 %         S_nm(i,j) = W_nm(i,j) / (sqrt(d_n(i)) * sqrt(d_m(j)));
 %     end
 % end
-
-clear W_nm;
+% 
+% clear W_nm;
 
 abnormalityCheck(S_nm);
 
@@ -119,22 +133,34 @@ S_mm = (S_mm + S_mm.') / 2; %Enforce symmetry - would otherwise not be given bec
 abnormalityCheck(S_mm);
 symmetryCheck(S_mm);
 
-[V_mm, Lambda_mm] = eig(S_mm);                                             clear S_mm;
-p_index = diag(Lambda_mm) > reg; %prevent singularity
-p = nnz(p_index);
+%%%% perform truncated SVD on m-by-m matrix W
 
-V_mp = V_mm(:,p_index);                                                    clear V_mm;
-Lambda_pp = Lambda_mm(p_index,p_index);                                    clear Lambda_mm;
+[V_S,D_S] = rsvd(S_mm,RSVD.k,RSVD.p,RSVD.q);                               clear S_mm;
 
-V_tilde = sqrt(m/n) * S_nm * (V_mp * Lambda_pp^-1);                        clear S_nm; clear V_mp;
-Lambda_tilde = (n/m) * Lambda_pp;                                          clear Lambda_pp;
+%%%% form the approximation
+
+U_S = S_nm * ( sqrt(m/n) * V_S );                                          clear S_nm; clear V_S;
+D_S = (n/m) * diag(diag(D_S).^-1);                                         
+
+V_tilde = U_S;                                                             clear U_S;
+Lambda_tilde = D_S;                                                        clear D_S;
+
+% [V_mm, Lambda_mm] = eig(S_mm);                                             clear S_mm;
+% p_index = diag(Lambda_mm) > reg; %prevent singularity
+% p = nnz(p_index);
+% 
+% V_mp = V_mm(:,p_index);                                                    clear V_mm;
+% Lambda_pp = Lambda_mm(p_index,p_index);                                    clear Lambda_mm;
+% 
+% V_tilde = sqrt(m/n) * S_nm * (V_mp * Lambda_pp^-1);                        clear S_nm; clear V_mp;
+% Lambda_tilde = (n/m) * Lambda_pp;                                          clear Lambda_pp;
 
 % memory;
 
 A_inv = getAinv(V_tilde, Lambda_tilde, alpha);
 
 evaluation1 = ( Lambda_tilde * (V_tilde.' * A_inv * V_tilde) ...
-                  - spdiags(alpha^-1 * ones(p,1), 0, p, p) )^-1;
+                  - diag(alpha^-1 * ones(RSVD.k,1)) )^-1;
               
 evaluation2 = A_inv * V_tilde * ( evaluation1 * ...
                               (Lambda_tilde * (V_tilde.' * A_inv * Y)) );  clear evaluation1;
