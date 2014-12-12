@@ -43,5 +43,16 @@ ipMapTest(test_pos)   = subip_gt(test_pos);
 ipMapTrain = reshape(ipMapTrain, size(subip_gt));
 ipMapTest  = reshape(ipMapTest, size(subip_gt));
 
+labels = unique(ipMapTrain(ipMapTrain~=0));
+
+for lbel = 1:length(labels)
+    label = labels(lbel);
+    
+    ipMapTrain(ipMapTrain == label) = lbel;
+    
+    ipMapTest(ipMapTest == label) = lbel;
+end
+
 save('ipMapTrain.mat', 'ipMapTrain');
 save('ipMapTest.mat',  'ipMapTest');
+save('subip_hsi.mat', 'subip_hsi');
