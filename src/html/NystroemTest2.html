@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>NystroemTest2</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-12-09"><meta name="DC.source" content="NystroemTest2.m"><style type="text/css">
+      --><title>NystroemTest2</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-12-12"><meta name="DC.source" content="NystroemTest2.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,13 +66,13 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Test the quality of approximation for different algorithms</a></li><li><a href="#2">0. Setup parameters</a></li><li><a href="#3">1. Setup tests</a></li><li><a href="#5">2. Compare Nystroem precisions</a></li><li><a href="#7">2.1 Uniformly sampled Nystroem approximation of W_1</a></li><li><a href="#8">2.2 Uniformly sampled Nystroem approximation of W_2</a></li><li><a href="#9">2.3 K-Means Nystroem approximation of W_1</a></li><li><a href="#10">2.4 K-Means Nystroem approximation of W_2</a></li><li><a href="#12">Plot results</a></li><li><a href="#13">Errors for uniform sampling with Gram matrix with self affinity.</a></li><li><a href="#14">Errors for uniform sampling using matrix without self affinity.</a></li><li><a href="#15">Errors for K-means Nystroem using Gram matrix.</a></li></ul></div><h2>Test the quality of approximation for different algorithms<a name="1"></a></h2><p>This script tests two Nystroem methods (1) and also examines the precision of the normalisation factor approximation algorithm used in our code (2).</p><p>The tested Nystroem methods are</p><div><ol><li>Uniformly sampled Nystroem method</li><li>K-means Nystroem method</li></ol></div><p>Both methods are tested using project data (`hsi`).</p><p>The test scenario is as following: Both methods are used to approximate</p><div><ol><li>a kernel matrix W with self affinity</li><li>a kernel matrix W without self affinity</li></ol></div><p>and</p><div><ol><li>the normalisation factors for the whole kernel matrix using Nystroem   approximation</li></ol></div><p>The norm of the difference between approximation and reference.</p><pre class="codeinput">clc, clear, close <span class="string">all</span>;
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Test the quality of approximation for different algorithms</a></li><li><a href="#2">0. Setup parameters</a></li><li><a href="#3">1. Setup tests</a></li><li><a href="#5">2. Compare Nystroem precisions</a></li><li><a href="#7">2.1 Uniformly sampled Nystroem approximation of W_1</a></li><li><a href="#8">2.2 Uniformly sampled Nystroem approximation of W_2</a></li><li><a href="#9">2.3 K-Means Nystroem approximation of W_1</a></li><li><a href="#10">2.4 K-Means Nystroem approximation of W_2</a></li><li><a href="#11">2.5 Randomized SVD approximation of W_1</a></li><li><a href="#13">Plot results</a></li><li><a href="#14">Errors for uniform sampling with Gram matrix with self affinity.</a></li><li><a href="#15">Errors for uniform sampling using matrix without self affinity.</a></li><li><a href="#16">Errors for K-means Nystroem using Gram matrix.</a></li><li><a href="#17">Errors for randomised SVD Nystroem method</a></li></ul></div><h2>Test the quality of approximation for different algorithms<a name="1"></a></h2><p>This script tests two Nystroem methods (1) and also examines the precision of the normalisation factor approximation algorithm used in our code (2).</p><p>The tested Nystroem methods are</p><div><ol><li>Uniformly sampled Nystroem method</li><li>K-means Nystroem method</li></ol></div><p>Both methods are tested using project data (`hsi`).</p><p>The test scenario is as following: Both methods are used to approximate</p><div><ol><li>a kernel matrix W with self affinity</li><li>a kernel matrix W without self affinity</li></ol></div><p>and</p><div><ol><li>the normalisation factors for the whole kernel matrix using Nystroem   approximation</li></ol></div><p>The norm of the difference between approximation and reference.</p><pre class="codeinput">clc, clear, close <span class="string">all</span>;
 </pre><h2>0. Setup parameters<a name="2"></a></h2><pre class="codeinput">load <span class="string">hsi</span>;
 
 n = 1000;
 sigma = 0.3;
 
-runs = 1e2;
+runs = 0.5e2;
 
 m_fraction_array = [1e-2, 1.5e-2, 2.5e-2, 4e-2, 5e-2, 7.5e-2, 1e-1, 2e-1, 3e-1, 5e-1];
 
@@ -101,6 +101,9 @@ error_S_K1 = zeros(1, length(m_array));
 error_W_K_alt = zeros(1, length(m_array));
 error_d_K_alt = zeros(1, length(m_array));
 error_S_K2 = zeros(1, length(m_array));
+
+error_W_R1 = zeros(1, length(m_array));
+error_d_R1 = zeros(1, length(m_array));
 </pre><h2>1. Setup tests<a name="3"></a></h2><pre class="codeinput">W_1 = exp(-sqdist(X.', X.') / (2*sigma^2));
 
 d_n_1 = sum(W_1, 2) - 1;
@@ -175,7 +178,15 @@ S_2 = zeros(size(W_2));
 
         error_W_K_alt(l) = error_W_K_alt(l) + norm(W_1 - W_1_tilde_alt, <span class="string">'fro'</span>);
         error_d_K_alt(l) = error_d_K_alt(l) + norm(d_n_1(:) - d_1_tilde_alt(:));
-</pre><h2>2.4 K-Means Nystroem approximation of W_2<a name="10"></a></h2><p>Does not make sense.</p><pre class="codeinput">    <span class="keyword">end</span>
+</pre><h2>2.4 K-Means Nystroem approximation of W_2<a name="10"></a></h2><p>Does not make sense.</p><h2>2.5 Randomized SVD approximation of W_1<a name="11"></a></h2><pre class="codeinput">        p = 10; q = 2;
+        k=ceil(0.1*m);
+
+        [U,D, e] = rnys(W_1,k,m,mIDX,p,q);
+        d_1_R = sum(U) * D * U.';
+
+        error_W_R1(l) = error_W_R1(l) + e;
+        error_d_R1(l) = error_d_R1(l) + norm(d_n_1(:) - d_1_R(:));
+</pre><pre class="codeinput">    <span class="keyword">end</span>
 <span class="keyword">end</span>
 
 error_W_U1 = error_W_U1 / runs;
@@ -189,7 +200,10 @@ error_d_K1 = error_d_K1 / runs;
 
 error_W_K_alt = error_W_K_alt / runs;
 error_d_K_alt = error_d_K_alt / runs;
-</pre><h2>Plot results<a name="12"></a></h2><h2>Errors for uniform sampling with Gram matrix with self affinity.<a name="13"></a></h2><p>First matrix norm for W approximation:</p><pre class="codeinput">figure, plot(m_fraction_array, error_W_U1);
+
+error_W_R1 = error_W_R1 / runs;
+error_d_R1 = error_d_R1 / runs;
+</pre><h2>Plot results<a name="13"></a></h2><h2>Errors for uniform sampling with Gram matrix with self affinity.<a name="14"></a></h2><p>First matrix norm for W approximation:</p><pre class="codeinput">figure, plot(m_fraction_array, error_W_U1);
 xlabel(<span class="string">'Nystroem fraction of sample numbers'</span>);
 ylabel(<span class="string">'Frobenius norm of difference'</span>);
 title(<span class="string">'Uniformly sampled Nystroem using Gram matrix - Approximation error of W'</span>);
@@ -201,19 +215,19 @@ xlabel(<span class="string">'Nystroem fraction of sample numbers'</span>);
 ylabel(<span class="string">'Norm of difference'</span>);
 title(<span class="string">'Uniformly sampled Nystroem using Gram matrix - Approximation error of d'</span>);
 snapnow;
-</pre><img vspace="5" hspace="5" src="NystroemTest2_01.png" alt=""> <img vspace="5" hspace="5" src="NystroemTest2_02.png" alt=""> <h2>Errors for uniform sampling using matrix without self affinity.<a name="14"></a></h2><p>First matrix norm for W approximation:</p><pre class="codeinput">figure, plot(m_fraction_array, error_W_U2);
+</pre><img vspace="5" hspace="5" src="NystroemTest2_01.png" alt=""> <img vspace="5" hspace="5" src="NystroemTest2_02.png" alt=""> <h2>Errors for uniform sampling using matrix without self affinity.<a name="15"></a></h2><p>First matrix norm for W approximation:</p><pre class="codeinput">figure, semilogy(m_fraction_array, error_W_U2);
 xlabel(<span class="string">'Nystroem fraction of sample numbers'</span>);
 ylabel(<span class="string">'Frobenius norm of difference'</span>);
 title(<span class="string">'Uniformly sampled Nystroem using matrix without self affinity - Approximation error of W'</span>);
 snapnow;
 
 <span class="comment">% Then error for the approximation of d:</span>
-figure, plot(m_fraction_array, error_d_U2);
+figure, semilogy(m_fraction_array, error_d_U2);
 xlabel(<span class="string">'Nystroem fraction of sample numbers'</span>);
 ylabel(<span class="string">'Norm of difference'</span>);
 title(<span class="string">'Uniformly sampled Nystroem using matrix without self affinity - Approximation error of d'</span>);
 snapnow;
-</pre><img vspace="5" hspace="5" src="NystroemTest2_03.png" alt=""> <img vspace="5" hspace="5" src="NystroemTest2_04.png" alt=""> <h2>Errors for K-means Nystroem using Gram matrix.<a name="15"></a></h2><p>First matrix norm for W approximation:</p><pre class="codeinput">figure, plot(m_fraction_array, error_W_K_alt);
+</pre><img vspace="5" hspace="5" src="NystroemTest2_03.png" alt=""> <img vspace="5" hspace="5" src="NystroemTest2_04.png" alt=""> <h2>Errors for K-means Nystroem using Gram matrix.<a name="16"></a></h2><p>First matrix norm for W approximation:</p><pre class="codeinput">figure, plot(m_fraction_array, error_W_K_alt);
 xlabel(<span class="string">'Nystroem fraction of sample numbers'</span>);
 ylabel(<span class="string">'Frobenius norm of difference'</span>);
 title(<span class="string">'K-means Nystroem using Gram matrix - Approximation error of W'</span>);
@@ -225,9 +239,21 @@ xlabel(<span class="string">'Nystroem fraction of sample numbers'</span>);
 ylabel(<span class="string">'Norm of difference'</span>);
 title(<span class="string">'K-means Nystroem using Gram matrix - Approximation error of d'</span>);
 snapnow;
+</pre><img vspace="5" hspace="5" src="NystroemTest2_05.png" alt=""> <img vspace="5" hspace="5" src="NystroemTest2_06.png" alt=""> <h2>Errors for randomised SVD Nystroem method<a name="17"></a></h2><p>First matrix norm for W approximation:</p><pre class="codeinput">figure, plot(m_fraction_array, error_W_R1);
+xlabel(<span class="string">'Nystroem fraction of sample numbers'</span>);
+ylabel(<span class="string">'Frobenius norm of difference'</span>);
+title(<span class="string">'RSVD Nystroem using Gram matrix - Approximation error of W'</span>);
+snapnow;
+
+<span class="comment">% Then error for the approximation of d:</span>
+figure, plot(m_fraction_array, error_d_R1);
+xlabel(<span class="string">'Nystroem fraction of sample numbers'</span>);
+ylabel(<span class="string">'Norm of difference'</span>);
+title(<span class="string">'RSVD Nystroem using Gram matrix - Approximation error of d'</span>);
+snapnow;
 
 beep;
-</pre><img vspace="5" hspace="5" src="NystroemTest2_05.png" alt=""> <img vspace="5" hspace="5" src="NystroemTest2_06.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="NystroemTest2_07.png" alt=""> <img vspace="5" hspace="5" src="NystroemTest2_08.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Test the quality of approximation for different algorithms
 % This script tests two Nystroem methods (1) and also examines the
@@ -262,7 +288,7 @@ load hsi;
 n = 1000;
 sigma = 0.3;
 
-runs = 1e2;
+runs = 0.5e2;
 
 m_fraction_array = [1e-2, 1.5e-2, 2.5e-2, 4e-2, 5e-2, 7.5e-2, 1e-1, 2e-1, 3e-1, 5e-1];
 
@@ -291,6 +317,9 @@ error_S_K1 = zeros(1, length(m_array));
 error_W_K_alt = zeros(1, length(m_array));
 error_d_K_alt = zeros(1, length(m_array));
 error_S_K2 = zeros(1, length(m_array));
+
+error_W_R1 = zeros(1, length(m_array));
+error_d_R1 = zeros(1, length(m_array));
 
 %% 1. Setup tests
 W_1 = exp(-sqdist(X.', X.') / (2*sigma^2));
@@ -380,6 +409,16 @@ for l=1:length(m_array)
         
         %% 2.4 K-Means Nystroem approximation of W_2
         % Does not make sense.
+        
+        %% 2.5 Randomized SVD approximation of W_1
+        p = 10; q = 2;
+        k=ceil(0.1*m);
+        
+        [U,D, e] = rnys(W_1,k,m,mIDX,p,q);
+        d_1_R = sum(U) * D * U.';
+        
+        error_W_R1(l) = error_W_R1(l) + e;
+        error_d_R1(l) = error_d_R1(l) + norm(d_n_1(:) - d_1_R(:));
     end
 end
 
@@ -394,6 +433,9 @@ error_d_K1 = error_d_K1 / runs;
 
 error_W_K_alt = error_W_K_alt / runs;
 error_d_K_alt = error_d_K_alt / runs;
+
+error_W_R1 = error_W_R1 / runs;
+error_d_R1 = error_d_R1 / runs;
 
 %% Plot results
 %% Errors for uniform sampling with Gram matrix with self affinity. 
@@ -413,14 +455,14 @@ snapnow;
 
 %% Errors for uniform sampling using matrix without self affinity. 
 % First matrix norm for W approximation:
-figure, plot(m_fraction_array, error_W_U2);
+figure, semilogy(m_fraction_array, error_W_U2);
 xlabel('Nystroem fraction of sample numbers');
 ylabel('Frobenius norm of difference');
 title('Uniformly sampled Nystroem using matrix without self affinity - Approximation error of W');
 snapnow;
 
 % Then error for the approximation of d:
-figure, plot(m_fraction_array, error_d_U2);
+figure, semilogy(m_fraction_array, error_d_U2);
 xlabel('Nystroem fraction of sample numbers');
 ylabel('Norm of difference');
 title('Uniformly sampled Nystroem using matrix without self affinity - Approximation error of d');
@@ -439,6 +481,21 @@ figure, plot(m_fraction_array, error_d_K_alt);
 xlabel('Nystroem fraction of sample numbers');
 ylabel('Norm of difference');
 title('K-means Nystroem using Gram matrix - Approximation error of d');
+snapnow;
+
+%% Errors for randomised SVD Nystroem method
+% First matrix norm for W approximation:
+figure, plot(m_fraction_array, error_W_R1);
+xlabel('Nystroem fraction of sample numbers');
+ylabel('Frobenius norm of difference');
+title('RSVD Nystroem using Gram matrix - Approximation error of W');
+snapnow;
+
+% Then error for the approximation of d:
+figure, plot(m_fraction_array, error_d_R1);
+xlabel('Nystroem fraction of sample numbers');
+ylabel('Norm of difference');
+title('RSVD Nystroem using Gram matrix - Approximation error of d');
 snapnow;
 
 beep;

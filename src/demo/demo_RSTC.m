@@ -12,8 +12,8 @@ load trainingSamplesPerClass;
 % mapTest(~ismember(mapTest, lots)) = 0;
 
 %% Parameters
-alpha = 0.1;
-sigma = 2.5e-2;
+alpha = 0.5;
+sigma = 0.25;
 
 nystroemFraction = 1e-3; % 1percent
 
@@ -27,16 +27,9 @@ testIDX = mapTest > 0;
 
 tic;
 %% Perform classification
-predictedLabels = randomizedSetsClassistClassifier(hsi, mapTrain, testIDX, alpha, sigma, nystroemFraction, RSVD, sectionSize);
+predictedLabels = randomizedSetsClassifier(hsi, mapTrain, alpha, sigma, nystroemFraction, RSVD, sectionSize);
 
 mapPredict = reshape(predictedLabels, size(mapTrain));
-
-% %% Test----------
-% mapPredict = zeros(size(mapTrain));
-% for r=1:length(lots)
-%     mapPredict(mapPredict_tmp == r) = lots(r);
-% end
-% %% ------------
 
 %% Error rate
 testError = errorRate(mapPredict, mapTest);
@@ -44,3 +37,5 @@ cm = getConfusionMatrix(mapPredict, mapTest);
 [precision, recall] = precisionRecall(cm);
 
 toc
+
+showMap(mapPredict);

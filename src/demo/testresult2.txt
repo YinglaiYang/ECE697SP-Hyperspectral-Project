@@ -1,0 +1,44 @@
+testwindowedRSVD
+alpha = 0.2; sigma = 2.5e-2;
+nystroemFraction = 1e-3; % 1percent
+
+windowHeight = 100;
+windowWidth = 200;
+
+
+
+alpha = 0.2; 	sigma = 2.5e-2;	   1e-3;    100*200   0.5167    
+alpha = 0.1; 	sigma = 10e-2;	   1e-3;    100*200   0.5664/0.5746/0.5742
+alpha = 0.1; 	sigma = 100e-2;	   1e-3;    100*200   0.6628
+alpha = 0.1; 	sigma = 1000e-2;    1e-3;   100*200   0.6680
+
+alpha = 0.1; 	sigma = 1000e-2;    1e-2;   103*162   0.6690
+
+alpha = 0.2; 	sigma = 2.5e-2;	   1e-2;    100*200   0.4328     mapPredict1
+alpha = 0.03; 	sigma = 2.5e-2;	   1e-2;    100*200   0.4328/0.4292/0.4359    
+alpha = 0.03; 	sigma = 2.5e-2;	   1e-2;    100*200   0.4328    
+
+
+alpha = 0.1; 	sigma = 2.5e-2;	   1e-2;    100*100   0.4411   
+
+alpha = 0.1; 	sigma = 1e-2;	   1e-4;    972*614   0.6070   6.3s
+
+alpha = 0.1; 	sigma = 2.5e-2;	   1e-3;    324*205   0.4817   9.2s
+alpha = 0.1; 	sigma = 2.5e-2;	   1e-2;    324*205   0.4247   221s
+alpha = 0.1; 	sigma = 2.5e-2;	   1e-3;    486*307   0.4674/0.4803  
+
+alpha = 0.1; 	sigma = 2.5e-2;	   1e-2;    486*307   0.4170   1656s
+
+alpha = 0.1; 	sigma = 2.5e-2;	   1e-2;    50*50     0.4568   
+alpha = 0.1; 	sigma = 2.5e-2;	   1e-1;    50*50     0.4079   4456s?  mapPredict2
+
+alpha = 0.1; 	sigma = 2.5e-2;	   1e-2;    108*103     0.4375    
+alpha = 0.1; 	sigma = 2.5e-2;	   1e-1;    108*103   	0.4068   5024s  mapPredict3
+
+alpha = 0.1; 	sigma = 2.5e-2;	   1e-3;    324*205   0.4817   
+alpha = 0.01; 	sigma = 2.5e-2;	   1e-3;    324*205   0.4953   
+alpha = 0.05; 	sigma = 2.5e-2;	   1e-3;    324*205   0.4884   
+alpha = 0.075; 	sigma = 2.5e-2;	   1e-3;    324*205   0.4828  
+alpha = 0.25; 	sigma = 2.5e-2;	   1e-3;    324*205   0.4787   
+alpha = 0.5; 	sigma = 2.5e-2;	   1e-3;    324*205   0.4852   
+alpha = 0.9; 	sigma = 2.5e-2;	   1e-3;    324*205   0.4879   

@@ -29,7 +29,7 @@ clc, clear, close all;
 load hsi;
 
 n = 1000;
-sigma = 0.02;
+sigma = 0.3;
 
 runs = 0.5e2;
 
@@ -198,14 +198,14 @@ snapnow;
 
 %% Errors for uniform sampling using matrix without self affinity. 
 % First matrix norm for W approximation:
-figure, plot(m_fraction_array, error_W_U2);
+figure, semilogy(m_fraction_array, error_W_U2);
 xlabel('Nystroem fraction of sample numbers');
 ylabel('Frobenius norm of difference');
 title('Uniformly sampled Nystroem using matrix without self affinity - Approximation error of W');
 snapnow;
 
 % Then error for the approximation of d:
-figure, plot(m_fraction_array, error_d_U2);
+figure, semilogy(m_fraction_array, error_d_U2);
 xlabel('Nystroem fraction of sample numbers');
 ylabel('Norm of difference');
 title('Uniformly sampled Nystroem using matrix without self affinity - Approximation error of d');
